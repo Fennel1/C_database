@@ -1,0 +1,12 @@
+3,8
+0,ID
+2,User Name
+2,City
+2,Classify
+0,Score
+2,Sign
+2,7
+2,8
+10000,User0,Shanghai,Engineer,80,123,123,123
+10000,User0,Shanghai,Engineer,80,123,123,123
+10000,User0,Shanghai,Engineer,80,123,123,123

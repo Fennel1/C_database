@@ -9,19 +9,81 @@ MainWindow::MainWindow(QWidget *parent)
 
     SetTable();
     SetList();
+    InitDatabase();
 }
 
 void MainWindow::InitDatabase()
 {
     MyDatabase = (mydatabase *)malloc(sizeof(mydatabase));
 
-    MyDatabase->num_row = MyDatabase->num_col = 10;
+    Node *myrow, *mycol;
+    QFile file("/home/kim/qt/qtetst/file.txt");
+    if (file.exists())  printf("file exists\n");
+    else    printf("file error\n");
+//    file.open(QIODevice::ReadOnly);
+    if (file.open(QIODevice::ReadOnly)) printf("file open\n");
+    else    printf("file open fail\n");
 
-    MyDatabase->row = (myhead *)malloc(sizeof(myhead));
-    MyDatabase->col = (myhead *)malloc(sizeof(myhead));
+    QTextStream txt(&file);
+    QString line=txt.readLine();
+    QStringList strlist=line.split(",");
+    MyDatabase->num_row=strlist[0].toInt();
+    MyDatabase->num_col=strlist[1].toInt();
+    qDebug() << MyDatabase->num_row << MyDatabase->num_col << endl;
+    for (int i=0; i<MyDatabase->num_col; i++){
+        Node *temp = (mynode *)malloc(sizeof(mynode));
+        QString line=txt.readLine();
+//        qDebug() << line << endl;
+        QStringList strlist=line.split(",");
+//        qDebug() << strlist << endl;
+        temp->flag = strlist[0].toInt();
+        QByteArray ba = strlist[1].toLatin1();
+        temp->name = ba.data();
+        qDebug() << temp->flag << temp->name << endl;
+        if (i==1){
+            MyDatabase->col = temp;
+            mycol = temp;
+            temp->right = NULL;
+        }
+        else{
+            mycol->right = temp;
+            mycol = temp;
+            temp->right = NULL;
+        }
+    }
+    for (int i=0; i<MyDatabase->num_row; i++){
+        Node *temp = (mynode *)malloc(sizeof(mynode));
+        QString line=txt.readLine();
+//        qDebug() << line << endl;
+        QStringList strlist=line.split(",");
+        qDebug() << strlist << endl;
+        Node *p = MyDatabase->col;
+        for (int j=0; j<MyDatabase->num_col; j++){
+            if (p->flag==0){
 
+            }
+            else if (p->flag==1){
 
+            }
+            else if (p->flag==2){
 
+            }
+            else{
+                printf("col error\n");
+            }
+        }
+        if (i==1){
+            MyDatabase->row = temp;
+            myrow = temp;
+            temp->down = NULL;
+        }
+        else{
+            mycol->down = temp;
+            myrow = temp;
+            temp->down = NULL;
+        }
+    }
+    file.close();
 }
 
 void MainWindow::SetTable()
@@ -30,7 +92,7 @@ void MainWindow::SetTable()
         QStandardItemModel* model = new QStandardItemModel();
 
         /* 设置表格标题行(输入数据为QStringList类型) */
-        model->setHorizontalHeaderLabels({"ID", "User Name", "City", "Classify", "Score", "Sign"});
+        model->setHorizontalHeaderLabels({"ID", "User Name", "City", "Classify", "Score", "Sign","7","8"});
 
         /* 自适应所有列，让它布满空间 */
 //        ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
