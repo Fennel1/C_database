@@ -14,23 +14,13 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTextEdit" name="textEdit">
-    <property name="geometry">
-     <rect>
-      <x>320</x>
-      <y>0</y>
-      <width>781</width>
-      <height>171</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QTableView" name="tableView">
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>180</y>
+      <y>60</y>
       <width>781</width>
-      <height>481</height>
+      <height>601</height>
      </rect>
     </property>
    </widget>
@@ -41,6 +31,16 @@
       <y>180</y>
       <width>311</width>
       <height>481</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>10</y>
+      <width>781</width>
+      <height>41</height>
      </rect>
     </property>
    </widget>

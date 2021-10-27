@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTableView>
 #include <QApplication>
+#include<QCoreApplication>
 #include <QStandardItemModel>
 #include <QFile>
 #include <QDebug>
@@ -41,16 +42,23 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+public slots:   //槽函数
+    void readorder();   //读取命令
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
     void SetTable();    //设置表格
-    void SetList();     //设置列表
+    void AddList(QString str);     //设置列表
+    void SetOrder();    //设置命令输入框
 
-    void InitDatabase();    //初始化数据库
+    void OpenDatabase();    //初始化数据库
+    void readtxt(QString filead);   //读取txt文件
 
     struct Database *MyDatabase;
+    QStandardItemModel* listmodel;
+    QStandardItemModel* tablemodel;
 
 private:
     Ui::MainWindow *ui;
