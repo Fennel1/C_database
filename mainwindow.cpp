@@ -9,6 +9,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->lineEdit, SIGNAL(returnPressed()), this, SLOT(readorder()));
 
+    MyDatabase = new Database;
+    MyDatabase->row = MyDatabase->col = NULL;
+
     listmodel = new QStandardItemModel();
     ui->listView->setModel(listmodel);
     tablemodel = new QStandardItemModel();
@@ -16,22 +19,28 @@ MainWindow::MainWindow(QWidget *parent)
     SetOrder();
 }
 
-void MainWindow::OpenDatabase()
+void MainWindow::OpenDatabase(QString filename)
 {
-    MyDatabase = new Database;
+    CloseDatabase();
 
-    readtxt("/home/kim/qt/qtetst/file.txt");
-    SetTable();
+    if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt"))     SetTable();
+    else AddList(filename + "open failed");
 }
 
-void MainWindow::readtxt(QString filead)
+bool MainWindow::readtxt(QString filead)
 {
     QFile file(filead);
     Node *myrow, *mycol;
     if (file.exists())  printf("file exists\n");
-    else    printf("file error\n");
+    else{
+        printf("file not exists\n");
+        return false;
+    }
     if (file.open(QIODevice::ReadOnly)) printf("file open\n");
-    else    printf("file open fail\n");
+    else{
+        printf("file open fail\n");
+        return false;
+    }
 
     QTextStream txt(&file);
     QString line=txt.readLine();
@@ -59,46 +68,56 @@ void MainWindow::readtxt(QString filead)
         }
     }
     for (int i=0; i<MyDatabase->num_row; i++){
-        Node *temp = new Node;
+        Node *rowtemp = new Node;
+        Node *coltemp;
+        if (i == 0){
+            coltemp = MyDatabase->col;
+        }
+        else{
+            coltemp = coltemp->down;
+        }
         QString line=txt.readLine();
 //        qDebug() << line << endl;
         QStringList strlist=line.split(",");
         qDebug() << strlist << Qt::endl;
-        Node *p=MyDatabase->col, *tp=temp;
+        Node *cp=coltemp, *rp=rowtemp;
         for (int j=0; j<MyDatabase->num_col; j++){
             Node *tempnode = new Node;
-            if (p->flag==0){
+            if (cp->flag==0){
                 tempnode->v.data_int = strlist[j].toInt();
                 tempnode->flag = 0;
             }
-            else if (p->flag==1){
+            else if (cp->flag==1){
                 tempnode->v.data_int = strlist[j].toFloat();
                 tempnode->flag = 1;
             }
-            else if (p->flag==2){
+            else if (cp->flag==2){
                 tempnode->v.data_char = strlist[j];
                 tempnode->flag = 2;
             }
             else{
                 printf("col error\n");
             }
-            tp->right = tempnode;
-            tp = tempnode;
+            rp->right = tempnode;
+            rp = tempnode;
+            cp->down = tempnode;
             tempnode->right = NULL;
-            p = p->right;
+            tempnode->down = NULL;
+            cp = cp->right;
         }
         if (i==0){
-            MyDatabase->row = temp;
-            myrow = temp;
-            temp->down = NULL;
+            MyDatabase->row = rowtemp;
+            myrow = rowtemp;
+            rowtemp->down = NULL;
         }
         else{
-            myrow->down = temp;
-            myrow = temp;
-            temp->down = NULL;
+            myrow->down = rowtemp;
+            myrow = rowtemp;
+            rowtemp->down = NULL;
         }
     }
     file.close();
+    return true;
 }
 
 void MainWindow::SetTable()
@@ -130,6 +149,31 @@ void MainWindow::SetTable()
     } 
 }
 
+void MainWindow::CloseDatabase()
+{
+    Node *rowtemp = MyDatabase->row;
+
+    while(rowtemp){
+        Node *tempnode = rowtemp->right, *delrow=rowtemp;
+        while (tempnode){
+            Node *delnode = tempnode;
+            tempnode = tempnode->right;
+            free(delnode);
+        }
+        rowtemp = rowtemp->down;
+        free(delrow);
+    }
+
+    Node *coltemp = MyDatabase->col;
+    while (coltemp){
+        Node *delcol=coltemp;
+        coltemp = coltemp->right;
+        free(delcol);
+    }
+
+    MyDatabase->row = MyDatabase->col = NULL;
+}
+
 void MainWindow::AddList(QString str)
 {
 
@@ -150,23 +194,26 @@ void MainWindow::readorder()
     order = order.simplified().toLower();    //去除多余空格,并转换为小写
 
     if (order.isEmpty() || order.isNull())  return;
-    else if (order.left(3) == "add"){
+    else if (order.length() > 4 && order.left(3) == "add"){
         AddList(QString(order));
     }
-    else if (order.left(4) == "open"){
+    else if (order.length() > 5 && order.left(4) == "open"){
         AddList(QString(order));
-        OpenDatabase();
+        OpenDatabase(order.right(order.length()-5));
     }
-    else if (order.left(5) == "creat"){
+    else if (order.length() > 5 && order.left(5) == "creat"){
         AddList(QString(order));
+        CreatDatabase(order.right(order.length()-5));
     }
     else if (order == "clear"){
         listmodel->clear();
         tablemodel->clear();
+        CloseDatabase();
         AddList("clear");
     }
     else if (order.left(10) == "locate for"){
         AddList(QString(order));
+
     }
     else if (order.left(10) == "delete for"){
         AddList(QString(order));
@@ -177,6 +224,18 @@ void MainWindow::readorder()
 
     ui->lineEdit->clear();
 
+}
+
+bool MainWindow::CreatDatabase(QString filename)
+{
+    QFile file("/home/kim/qt/qtetst/" + filename + ".txt");
+    if (file.exists()){
+        qDebug() << "file already exists" << Qt::endl;
+        return false;
+    }
+    file.open(QIODevice::WriteOnly);
+    file.close();
+    return true;
 }
 
 MainWindow::~MainWindow()

@@ -53,8 +53,10 @@ public:
     void AddList(QString str);     //设置列表
     void SetOrder();    //设置命令输入框
 
-    void OpenDatabase();    //初始化数据库
-    void readtxt(QString filead);   //读取txt文件
+    void OpenDatabase(QString filename);    //初始化数据库
+    void CloseDatabase();                   //关闭数据库并回收内存
+    bool CreatDatabase(QString filename);   //创建数据库
+    bool readtxt(QString filename);         //读取txt文件
 
     struct Database *MyDatabase;
     QStandardItemModel* listmodel;
