@@ -21,10 +21,11 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::OpenDatabase(QString filename)
 {
+    tablemodel->clear();
     CloseDatabase();
 
     if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt"))     SetTable();
-    else AddList(filename + "open failed");
+    else AddList(filename + " open failed");
 }
 
 bool MainWindow::readtxt(QString filead)
@@ -45,8 +46,9 @@ bool MainWindow::readtxt(QString filead)
     QTextStream txt(&file);
     QString line=txt.readLine();
     QStringList strlist=line.split(",");
-    MyDatabase->num_row=strlist[0].toInt();
-    MyDatabase->num_col=strlist[1].toInt();
+    MyDatabase->name_database=strlist[0];
+    MyDatabase->num_row=strlist[1].toInt();
+    MyDatabase->num_col=strlist[2].toInt();
     qDebug() << MyDatabase->num_row << MyDatabase->num_col << Qt::endl;
     for (int i=0; i<MyDatabase->num_col; i++){
         Node *temp = new Node;
@@ -126,6 +128,7 @@ void MainWindow::SetTable()
     Node *p=MyDatabase->col;
     while(p){
         hlabels << p->name;
+//        qDebug() << p->name << Qt::endl;
         p = p->right;
     }
     tablemodel->setHorizontalHeaderLabels(hlabels);
@@ -158,17 +161,17 @@ void MainWindow::CloseDatabase()
         while (tempnode){
             Node *delnode = tempnode;
             tempnode = tempnode->right;
-            free(delnode);
+            delete delnode;
         }
         rowtemp = rowtemp->down;
-        free(delrow);
+        delete delrow;
     }
 
     Node *coltemp = MyDatabase->col;
     while (coltemp){
         Node *delcol=coltemp;
         coltemp = coltemp->right;
-        free(delcol);
+        delete delcol;
     }
 
     MyDatabase->row = MyDatabase->col = NULL;
@@ -194,8 +197,50 @@ void MainWindow::readorder()
     order = order.simplified().toLower();    //去除多余空格,并转换为小写
 
     if (order.isEmpty() || order.isNull())  return;
+    else if (order == "save"){
+        if(SaveDatabase())  AddList("Successfully saved file");
+        else    AddList("Save file failed");
+    }
     else if (order.length() > 4 && order.left(3) == "add"){
         AddList(QString(order));
+        if(order.mid(4,3)=="col")
+        {
+            if(order.mid(8,3)=="int"){
+                AddColumn(0,order.mid(12));
+            }
+            else if (order.mid(8,4)=="char") {
+                AddColumn(2,order.mid(13));
+            }
+            else if (order.mid(8,5)=="float") {
+                AddColumn(1,order.mid(14));
+            }
+        }
+        else if (order.mid(4,3)=="row") {
+            AddRow();
+        }
+    }
+    else if (order.left(3)=="mod") {                            //mod (1,user name,aaa)
+        int i1=5,i2,i3;
+        int n1=0,n2=0,n3=0;
+        if(order[4]=='('){
+            while(order[i1]!=','){
+                i1++;
+                n1++;
+            }
+            i2=i1+1;
+            while(order[i2]!=','){
+                i2++;
+                n2++;
+            }
+            i3=i2+1;
+            while(order[i3]!=')'){
+                i3++;
+                n3++;
+            }
+        }
+        qDebug()<< order.mid(i1-n1,n1).toInt() << order.mid(i2-n2,n2) << order.mid(i3-n3,n3) << Qt::endl;
+        Modify(order.mid(i1-n1,n1).toInt(),order.mid(i2-n2,n2),order.mid(i3-n3,n3));
+
     }
     else if (order.length() > 5 && order.left(4) == "open"){
         AddList(QString(order));
@@ -203,7 +248,7 @@ void MainWindow::readorder()
     }
     else if (order.length() > 5 && order.left(5) == "creat"){
         AddList(QString(order));
-        CreatDatabase(order.right(order.length()-5));
+        CreatDatabase(order.right(order.length()-6));
     }
     else if (order == "clear"){
         listmodel->clear();
@@ -226,6 +271,119 @@ void MainWindow::readorder()
 
 }
 
+void MainWindow::AddColumn(int type,QString name)
+{
+    if(name==NULL)
+    {
+        return;
+    }
+    MyDatabase->num_col++;
+    Node *temp = new Node;
+    Node* p=MyDatabase->col;
+    while(p->right){
+        p=p->right;
+    }
+    temp->name = name;
+    temp->flag = type;
+    temp->right=NULL;
+    temp->down=NULL;
+    p->right=temp;
+    Node* c=p;
+    qDebug()<<"start"<< Qt::endl;
+    for (int i=0;i<MyDatabase->num_row;i++) {
+        qDebug()<<1<< Qt::endl;
+        c=c->down;
+        qDebug()<<2<< Qt::endl;
+        Node *tem = new Node;
+        qDebug()<<3<< Qt::endl;
+        tem->v.data_int=0;
+        tem->v.data_char="None";
+        tem->v.data_float=0.0;
+        qDebug()<<4<< Qt::endl;
+        tem->flag=type;
+        tem->right=NULL;
+        tem->down=NULL;
+        temp->down=tem;
+        qDebug()<<5<< Qt::endl;
+        c->right=tem;
+        temp=tem;
+        qDebug()<<6<< Qt::endl;
+    }
+    SetTable();
+}
+
+void MainWindow::AddRow()
+{
+    MyDatabase->num_row++;
+    Node* f=MyDatabase->col;
+    Node* p=MyDatabase->row;
+    Node* prep=MyDatabase->row;
+    while(p->down){
+        p=p->down;
+    }
+    Node *head = new Node;
+    Node *h;
+    h=head;
+    for (int i=2;i<MyDatabase->num_row;i++) {
+        prep=prep->down;
+    }
+    prep=prep->right;
+    for(int i=0;i<MyDatabase->num_col;i++){
+        Node *temp = new Node;
+        temp->v.data_int=0;
+        temp->v.data_char="None";
+        temp->v.data_float=0.0;
+        temp->flag=f->flag;
+        f=f->right;
+        prep->down=temp;
+        prep=prep->right;
+        h->right=temp;
+        h=temp;
+    }
+    h->right=NULL;
+    head->down=NULL;
+    p->down=head;
+    SetTable();
+}
+
+void MainWindow::Modify(int row,QString col,QString change)
+{
+    Node* f=MyDatabase->col;
+    for (;f->name!=col;f=f->right) {
+        qDebug() << f->name;
+    }
+    for (int i=1;i<row;i++) {
+        f=f->down;
+        qDebug() << "fdown" << Qt::endl;
+    }
+    if(f->flag==0){
+        qDebug() << "if0" << Qt::endl;
+        for (int i=0;change[i]!='\0';i++) {
+            if(change[i]<'0'||change[i]>'9'){
+                AddList("Modify error!");
+                return;
+            }
+        }
+        f->v.data_int=change.toInt();
+    }
+    else if (f->flag==1) {
+        qDebug() << "if1" << Qt::endl;
+        for (int i=0;change[i]!='\0';i++) {
+            if(change[i]<'0'||change[i]>'9'){
+                AddList("Modify error!");
+                return;
+            }
+        }
+        f->v.data_float=change.toFloat();
+    }
+    else if (f->flag==2) {
+        qDebug() << "if2" << Qt::endl;
+        f->v.data_char=change;
+    }
+    qDebug() << "end" << Qt::endl;
+    SetTable();
+}
+
 bool MainWindow::CreatDatabase(QString filename)
 {
     QFile file("/home/kim/qt/qtetst/" + filename + ".txt");
@@ -234,6 +392,49 @@ bool MainWindow::CreatDatabase(QString filename)
         return false;
     }
     file.open(QIODevice::WriteOnly);
+    file.write(filename.toLocal8Bit());
+    file.write(QString(",1,1\n").toLocal8Bit());
+    file.write(QString("0,ID\n").toLocal8Bit());
+    file.write(QString("10000\n").toLocal8Bit());
+    file.close();
+    OpenDatabase(filename);
+    return true;
+}
+
+bool MainWindow::SaveDatabase()
+{
+    QFile file("/home/kim/qt/qtetst/" + MyDatabase->name_database + ".txt");
+    if (!file.exists()){
+        qDebug() << "file not exists" << Qt::endl;
+        return false;
+    }
+    QTextStream txt(&file);
+    file.open(QIODevice::WriteOnly| QIODevice::Text);
+    txt << MyDatabase->name_database << "," << QString::number(MyDatabase->num_row)
+                   << "," << QString::number(MyDatabase->num_col) << "\n";
+    Node *coltemp = MyDatabase->col;
+    while (coltemp){
+        txt << QString::number(coltemp->flag) << "," << coltemp->name << "\n";
+        coltemp = coltemp->right;
+    }
+    Node *rowtemp = MyDatabase->row;
+    while(rowtemp){
+        Node *nodetemp=rowtemp->right;
+        if (nodetemp){
+            if (nodetemp->flag == 0)        txt << QString::number(nodetemp->v.data_int);
+            else if (nodetemp->flag == 1)   txt << QString::number(nodetemp->v.data_float);
+            else if (nodetemp->flag == 2)   txt << nodetemp->v.data_char;
+            nodetemp = nodetemp->right;
+        }
+        while(nodetemp){
+            if (nodetemp->flag == 0)        txt << "," << QString::number(nodetemp->v.data_int);
+            else if (nodetemp->flag == 1)   txt << "," << QString::number(nodetemp->v.data_float);
+            else if (nodetemp->flag == 2)   txt << "," << nodetemp->v.data_char;
+            nodetemp = nodetemp->right;
+        }
+        txt << "\n";
+        rowtemp = rowtemp->down;
+    }
     file.close();
     return true;
 }
@@ -241,5 +442,7 @@ bool MainWindow::CreatDatabase(QString filename)
 MainWindow::~MainWindow()
 {
     delete ui;
+    CloseDatabase();
+    free(MyDatabase);
 }
 

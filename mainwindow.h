@@ -56,7 +56,14 @@ public:
     void OpenDatabase(QString filename);    //初始化数据库
     void CloseDatabase();                   //关闭数据库并回收内存
     bool CreatDatabase(QString filename);   //创建数据库
+    bool SaveDatabase();    //保存
     bool readtxt(QString filename);         //读取txt文件
+
+    void AddColumn(int type,QString name);  //添加列
+    void AddRow();                          //添加行
+    void Modify(int row,QString col,QString change);    //修改
+    void LocateFor(QString name,int type,QString fo);   //查找
+    void DelateFor(QString name,int type,QString fo);   //删除
 
     struct Database *MyDatabase;
     QStandardItemModel* listmodel;
