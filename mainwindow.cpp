@@ -197,29 +197,20 @@ void MainWindow::readorder()
     order = order.simplified().toLower();    //去除多余空格,并转换为小写
 
     if (order.isEmpty() || order.isNull())  return;
-    else if (order == "save"){
+    else if (order.length() == 4 && order == "save"){
         if(SaveDatabase())  AddList("Successfully saved file");
         else    AddList("Save file failed");
     }
     else if (order.length() > 4 && order.left(3) == "add"){
         AddList(QString(order));
-        if(order.mid(4,3)=="col")
-        {
-            if(order.mid(8,3)=="int"){
-                AddColumn(0,order.mid(12));
-            }
-            else if (order.mid(8,4)=="char") {
-                AddColumn(2,order.mid(13));
-            }
-            else if (order.mid(8,5)=="float") {
-                AddColumn(1,order.mid(14));
-            }
+        if(order.mid(4,3)=="col"){
+           AddColumn(order);
         }
-        else if (order.mid(4,3)=="row") {
+        else if (order.mid(4,3)=="row"){
             AddRow();
         }
     }
-    else if (order.left(3)=="mod") {                            //mod (1,user name,aaa)
+    else if (order.length() > 4 && order.left(3)=="mod") {                            //mod (1,user name,aaa)
         int i1=5,i2,i3;
         int n1=0,n2=0,n3=0;
         if(order[4]=='('){
@@ -246,21 +237,21 @@ void MainWindow::readorder()
         AddList(QString(order));
         OpenDatabase(order.right(order.length()-5));
     }
-    else if (order.length() > 5 && order.left(5) == "creat"){
+    else if (order.length() > 6 && order.left(5) == "creat"){
         AddList(QString(order));
         CreatDatabase(order.right(order.length()-6));
     }
-    else if (order == "clear"){
+    else if (order.length() == 5 && order == "clear"){
         listmodel->clear();
         tablemodel->clear();
         CloseDatabase();
         AddList("clear");
     }
-    else if (order.left(10) == "locate for"){
+    else if (order.length() > 10 && order.left(10) == "locate for"){
         AddList(QString(order));
-
+        LocateFor(order.right(order.length()-10));
     }
-    else if (order.left(10) == "delete for"){
+    else if (order.length() > 10 && order.left(10) == "delete for"){
         AddList(QString(order));
     }
     else{
@@ -271,8 +262,23 @@ void MainWindow::readorder()
 
 }
 
-void MainWindow::AddColumn(int type,QString name)
+void MainWindow::AddColumn(QString order)
 {
+    int type;
+    QString name;
+    if(order.mid(8,3)=="int"){
+        name = order.mid(12);
+        type = 0;
+    }
+    else if (order.mid(8,4)=="char") {
+        name = order.mid(13);
+        type = 2;
+    }
+    else if (order.mid(8,5)=="float") {
+        name = order.mid(14);
+        type = 1;
+    }
+
     if(name==NULL)
     {
         return;
@@ -352,7 +358,7 @@ void MainWindow::Modify(int row,QString col,QString change)
     for (;f->name!=col;f=f->right) {
         qDebug() << f->name;
     }
-    for (int i=1;i<row;i++) {
+    for (int i=0;i<row;i++) {
         f=f->down;
         qDebug() << "fdown" << Qt::endl;
     }
@@ -436,6 +442,63 @@ bool MainWindow::SaveDatabase()
         rowtemp = rowtemp->down;
     }
     file.close();
+    return true;
+}
+
+bool MainWindow::LocateFor(QString order)
+{
+    QStringList strlist;
+    QString op;
+    if (order.contains(">=")){
+        strlist = order.split(">=");
+        op = ">=";
+    }
+    else if (order.contains(">")){
+        strlist = order.split(">");
+        op = ">";
+    }
+    else if (order.contains("<=")){
+        strlist = order.split("<=");
+        op = "<=";
+    }
+    else if (order.contains("<")){
+        strlist = order.split("<");
+        op = "<";
+    }
+    else if (order.contains("==")){
+        strlist = order.split("==");
+        op = "==";
+    }
+    else if (order.contains("!=")){
+        strlist = order.split("!=");
+        op = "!=";
+    }
+    qDebug() << strlist << Qt::endl;
+    QString colname = strlist[1].trimmed();
+    QString value = strlist[2].trimmed();
+
+    Node *coltemp = MyDatabase->col;
+    while(coltemp && coltemp->name!=colname){
+        coltemp = coltemp->right;
+    }
+    if (coltemp->name != colname){
+        qDebug() << "colname not find" << Qt::endl;
+        return false;
+    }
+    if ((op==">=" || op==">" || op=="<=" || op=="<") && coltemp->flag == 2){
+        qDebug() << "col type error";
+        return false;
+    }
+
+    Node *rowtemp = MyDatabase->row;
+    if (op == "=="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+
+            }
+        }
+    }
+
     return true;
 }
 
