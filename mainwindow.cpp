@@ -21,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::OpenDatabase(QString filename)
 {
-    tablemodel->clear();
     CloseDatabase();
 
     if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt"))     SetTable();
@@ -124,6 +123,7 @@ bool MainWindow::readtxt(QString filead)
 
 void MainWindow::SetTable()
 {
+    tablemodel->clear();
     QStringList hlabels;
     Node *p=MyDatabase->col;
     while(p){
@@ -194,7 +194,7 @@ void MainWindow::readorder()
 //    qDebug() << ui->lineEdit->text() << Qt::endl;
     QString order = ui->lineEdit->text();
 
-    order = order.simplified().toLower();    //去除多余空格,并转换为小写
+    order = order.simplified();    //去除多余空格,并转换为小写
 
     if (order.isEmpty() || order.isNull())  return;
     else if (order.length() == 4 && order == "save"){
@@ -253,6 +253,7 @@ void MainWindow::readorder()
     }
     else if (order.length() > 10 && order.left(10) == "delete for"){
         AddList(QString(order));
+        DelateFor(order.right(order.length()-10));
     }
     else{
         AddList(QString("Order Error")+"->"+order);
@@ -473,15 +474,18 @@ bool MainWindow::LocateFor(QString order)
         strlist = order.split("!=");
         op = "!=";
     }
-    qDebug() << strlist << Qt::endl;
-    QString colname = strlist[1].trimmed();
-    QString value = strlist[2].trimmed();
+    else{
+        return false;
+    }
+    QString colname = strlist[0].trimmed();
+    QString value = strlist[1].trimmed();
+    qDebug() << colname << value << op << Qt::endl;
 
     Node *coltemp = MyDatabase->col;
     while(coltemp && coltemp->name!=colname){
         coltemp = coltemp->right;
     }
-    if (coltemp->name != colname){
+    if (coltemp==NULL){
         qDebug() << "colname not find" << Qt::endl;
         return false;
     }
@@ -490,15 +494,1739 @@ bool MainWindow::LocateFor(QString order)
         return false;
     }
 
-    Node *rowtemp = MyDatabase->row;
+    coltemp = coltemp->down;
+    Node *rowtemp = MyDatabase->row, *prerow=NULL;
+    bool isfirstrow=true;
     if (op == "=="){
         if (coltemp->flag == 0){
             while(rowtemp){
-
+                if (QString::number(coltemp->v.data_int) == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_float) == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            while(rowtemp){
+                if (coltemp->v.data_char == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
             }
         }
     }
+    else if (op == "!="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_int) != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_float) != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            while(rowtemp){
+                if (coltemp->v.data_char != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+    }
+    else if (op == ">="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int >= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float >= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == ">"){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int > value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float > value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == "<="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int <= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float <= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == "<"){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int < value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float < value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
 
+    SetTable();
+    return true;
+}
+
+bool MainWindow::DelateFor(QString order)
+{
+    QStringList strlist;
+    QString op;
+    if (order.contains(">=")){
+        strlist = order.split(">=");
+        op = ">=";
+    }
+    else if (order.contains(">")){
+        strlist = order.split(">");
+        op = ">";
+    }
+    else if (order.contains("<=")){
+        strlist = order.split("<=");
+        op = "<=";
+    }
+    else if (order.contains("<")){
+        strlist = order.split("<");
+        op = "<";
+    }
+    else if (order.contains("==")){
+        strlist = order.split("==");
+        op = "==";
+    }
+    else if (order.contains("!=")){
+        strlist = order.split("!=");
+        op = "!=";
+    }
+    else{
+        return false;
+    }
+    QString colname = strlist[0].trimmed();
+    QString value = strlist[1].trimmed();
+    qDebug() << colname << value << op << Qt::endl;
+
+    Node *coltemp = MyDatabase->col;
+    while(coltemp && coltemp->name!=colname){
+        coltemp = coltemp->right;
+    }
+    if (coltemp==NULL){
+        qDebug() << "colname not find" << Qt::endl;
+        return false;
+    }
+    if ((op==">=" || op==">" || op=="<=" || op=="<") && coltemp->flag == 2){
+        qDebug() << "col type error";
+        return false;
+    }
+
+    coltemp = coltemp->down;
+    Node *rowtemp = MyDatabase->row, *prerow=NULL;
+    bool isfirstrow=true;
+    if (op == "=="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_int) != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_float) != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            while(rowtemp){
+                if (coltemp->v.data_char != value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+    }
+    else if (op == "!="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_int) == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (QString::number(coltemp->v.data_float) == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            while(rowtemp){
+                if (coltemp->v.data_char == value){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+    }
+    else if (op == ">="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int < value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float < value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == ">"){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int <= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float <= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == "<="){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int > value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float > value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+    else if (op == "<"){
+        if (coltemp->flag == 0){
+            while(rowtemp){
+                if (coltemp->v.data_int >= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 1){
+            while(rowtemp){
+                if (coltemp->v.data_float >= value.toInt()){
+                    if (isfirstrow){
+                        Node *cp = MyDatabase->col, *rp=rowtemp->right;
+                        while(cp){
+                            cp->down = rp;
+                            cp = cp->right;
+                            rp = rp->right;
+                        }
+                        MyDatabase->row = rowtemp;
+                        prerow = rowtemp;
+                        isfirstrow = false;
+                    }
+                    else{
+                       Node *cp = prerow->right, *rp=rowtemp->right;
+                       while(cp){
+                           cp->down = rp;
+                           cp = cp->right;
+                           rp = rp->right;
+                       }
+                       prerow->down = rowtemp;
+                       prerow = rowtemp;
+                    }
+                }
+                else{
+                    MyDatabase->num_row--;
+                }
+                coltemp = coltemp->down;
+                rowtemp = rowtemp->down;
+            }
+            Node *rp=prerow;
+            if (rp==NULL){
+                Node *rowtemp = MyDatabase->row;
+                while(rowtemp){
+                    Node *tempnode = rowtemp->right, *delrow=rowtemp;
+                    while (tempnode){
+                        Node *delnode = tempnode;
+                        tempnode = tempnode->right;
+                        delete delnode;
+                    }
+                    rowtemp = rowtemp->down;
+                    delete delrow;
+                }
+                MyDatabase->row = NULL;
+                Node *coltemp = MyDatabase->col;
+                while(coltemp){
+                    coltemp->down = NULL;
+                    coltemp = coltemp->right;
+                }
+            }
+            else{
+                while(rp){
+                    rp->down = NULL;
+                    rp = rp->right;
+                }
+            }
+        }
+        else if (coltemp->flag == 2){
+            return false;
+        }
+    }
+
+    SetTable();
     return true;
 }
 

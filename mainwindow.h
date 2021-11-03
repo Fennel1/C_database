@@ -62,8 +62,8 @@ public:
     void AddColumn(QString order);  //添加列
     void AddRow();                          //添加行
     void Modify(int row,QString col,QString change);    //修改
-    void LocateFor(QString order);   //查找
-    void DelateFor(QString order);   //删除
+    bool LocateFor(QString order);   //查找
+    bool DelateFor(QString order);   //删除
 
     struct Database *MyDatabase;
     QStandardItemModel* listmodel;
