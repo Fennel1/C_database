@@ -61,7 +61,7 @@ public:
 
     void AddColumn(QString order);  //添加列
     void AddRow();                          //添加行
-    void Modify(int row,QString col,QString change);    //修改
+    void Modify(QString order);    //修改
     bool LocateFor(QString order);   //查找
     bool DelateFor(QString order);   //删除
 

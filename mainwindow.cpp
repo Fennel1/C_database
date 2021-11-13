@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     MyDatabase = new Database;
     MyDatabase->row = MyDatabase->col = NULL;
+    MyDatabase->num_row = MyDatabase->num_col = 0;
 
     listmodel = new QStandardItemModel();
     ui->listView->setModel(listmodel);
@@ -23,8 +24,10 @@ void MainWindow::OpenDatabase(QString filename)
 {
     CloseDatabase();
 
-    if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt"))     SetTable();
-    else AddList(filename + " open failed");
+    if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt")){
+        AddList("Open " + filename);
+        SetTable();
+    }
 }
 
 bool MainWindow::readtxt(QString filead)
@@ -33,12 +36,12 @@ bool MainWindow::readtxt(QString filead)
     Node *myrow, *mycol;
     if (file.exists())  printf("file exists\n");
     else{
-        printf("file not exists\n");
+        AddList("Open error:file not exists");
         return false;
     }
     if (file.open(QIODevice::ReadOnly)) printf("file open\n");
     else{
-        printf("file open fail\n");
+        AddList("Open error:file open fail");
         return false;
     }
 
@@ -202,7 +205,6 @@ void MainWindow::readorder()
         else    AddList("Save file failed");
     }
     else if (order.length() > 4 && order.left(3) == "add"){
-        AddList(QString(order));
         if(order.mid(4,3)=="col"){
            AddColumn(order);
         }
@@ -211,34 +213,12 @@ void MainWindow::readorder()
         }
     }
     else if (order.length() > 4 && order.left(3)=="mod") {                            //mod (1,user name,aaa)
-        int i1=5,i2,i3;
-        int n1=0,n2=0,n3=0;
-        if(order[4]=='('){
-            while(order[i1]!=','){
-                i1++;
-                n1++;
-            }
-            i2=i1+1;
-            while(order[i2]!=','){
-                i2++;
-                n2++;
-            }
-            i3=i2+1;
-            while(order[i3]!=')'){
-                i3++;
-                n3++;
-            }
-        }
-        qDebug()<< order.mid(i1-n1,n1).toInt() << order.mid(i2-n2,n2) << order.mid(i3-n3,n3) << Qt::endl;
-        Modify(order.mid(i1-n1,n1).toInt(),order.mid(i2-n2,n2),order.mid(i3-n3,n3));
-
+        Modify(order);
     }
     else if (order.length() > 5 && order.left(4) == "open"){
-        AddList(QString(order));
         OpenDatabase(order.right(order.length()-5));
     }
     else if (order.length() > 6 && order.left(5) == "creat"){
-        AddList(QString(order));
         CreatDatabase(order.right(order.length()-6));
     }
     else if (order.length() == 5 && order == "clear"){
@@ -248,15 +228,15 @@ void MainWindow::readorder()
         AddList("clear");
     }
     else if (order.length() > 10 && order.left(10) == "locate for"){
-        AddList(QString(order));
-        LocateFor(order.right(order.length()-10));
+        if (LocateFor(order.right(order.length()-10)))  AddList(order);
+        else    AddList("Locate error");
     }
     else if (order.length() > 10 && order.left(10) == "delete for"){
-        AddList(QString(order));
-        DelateFor(order.right(order.length()-10));
+        if (DelateFor(order.right(order.length()-10)))  AddList(order);
+        else    AddList("Delete error");
     }
     else{
-        AddList(QString("Order Error")+"->"+order);
+        AddList("Order Error:" + order);
     }
 
     ui->lineEdit->clear();
@@ -265,6 +245,10 @@ void MainWindow::readorder()
 
 void MainWindow::AddColumn(QString order)
 {
+    if (MyDatabase->row == 0){
+        AddList("Add error:num of row is 0");
+        return;
+    }
     int type;
     QString name;
     if(order.mid(8,3)=="int"){
@@ -296,31 +280,29 @@ void MainWindow::AddColumn(QString order)
     temp->down=NULL;
     p->right=temp;
     Node* c=p;
-    qDebug()<<"start"<< Qt::endl;
     for (int i=0;i<MyDatabase->num_row;i++) {
-        qDebug()<<1<< Qt::endl;
         c=c->down;
-        qDebug()<<2<< Qt::endl;
         Node *tem = new Node;
-        qDebug()<<3<< Qt::endl;
         tem->v.data_int=0;
         tem->v.data_char="None";
         tem->v.data_float=0.0;
-        qDebug()<<4<< Qt::endl;
         tem->flag=type;
         tem->right=NULL;
         tem->down=NULL;
         temp->down=tem;
-        qDebug()<<5<< Qt::endl;
         c->right=tem;
         temp=tem;
-        qDebug()<<6<< Qt::endl;
     }
     SetTable();
+    AddList("Add col");
 }
 
 void MainWindow::AddRow()
 {
+    if (MyDatabase->col == 0){
+        AddList("Add error:num of col is 0");
+        return;
+    }
     MyDatabase->num_row++;
     Node* f=MyDatabase->col;
     Node* p=MyDatabase->row;
@@ -351,43 +333,89 @@ void MainWindow::AddRow()
     head->down=NULL;
     p->down=head;
     SetTable();
+    AddList("Add row");
 }
 
-void MainWindow::Modify(int row,QString col,QString change)
+void MainWindow::Modify(QString order)
 {
-    Node* f=MyDatabase->col;
-    for (;f->name!=col;f=f->right) {
-        qDebug() << f->name;
+    int i1=5,i2,i3, k=4;
+    int n1=0,n2=0,n3=0;
+    while(order[k]==" ")    k++;
+    if(order[k]=='('){
+        while(order[i1]!=','){
+            i1++;
+            n1++;
+            if (i1>order.length()){
+                AddList(QString("Modify Error:order Error"));
+                return;
+            }
+        }
+        i2=i1+1;
+        while(order[i2]!=','){
+            i2++;
+            n2++;
+            if (i2>order.length()){
+                AddList(QString("Modify Error:order Error"));
+                return;
+            }
+        }
+        i3=i2+1;
+        while(order[i3]!=')'){
+            i3++;
+            n3++;
+            if (i3>order.length()){
+                AddList(QString("Modify Error:order Error"));
+                return;
+            }
+        }
+    }
+    else{
+        AddList(QString("Modify Error:order Error"));
+        return;
+    }
+    int row = order.mid(i1-n1,n1).toInt();
+    QString col = order.mid(i2-n2,n2).simplified();
+    QString change = order.mid(i3-n3,n3).simplified();
+
+    qDebug() << row << col << change << Qt::endl;
+    Node *f=MyDatabase->col, *p=MyDatabase->col;
+    if (row > MyDatabase->num_row){
+        AddList(QString("Modify Error:exceed the rowlimit"));
+        return;
     }
     for (int i=0;i<row;i++) {
         f=f->down;
-        qDebug() << "fdown" << Qt::endl;
     }
+    while (p&&p->name!=col){
+        f = f->right;
+        p = p->right;
+    }
+    if (f==NULL){
+        AddList(QString("Modify Error:colname not find"));
+        return;
+    }
+
     if(f->flag==0){
-        qDebug() << "if0" << Qt::endl;
         for (int i=0;change[i]!='\0';i++) {
             if(change[i]<'0'||change[i]>'9'){
-                AddList("Modify error!");
+                AddList("Modify error:value type error");
                 return;
             }
         }
         f->v.data_int=change.toInt();
     }
     else if (f->flag==1) {
-        qDebug() << "if1" << Qt::endl;
         for (int i=0;change[i]!='\0';i++) {
             if(change[i]<'0'||change[i]>'9'){
-                AddList("Modify error!");
+                AddList("Modify error:value type error");
                 return;
             }
         }
         f->v.data_float=change.toFloat();
     }
     else if (f->flag==2) {
-        qDebug() << "if2" << Qt::endl;
         f->v.data_char=change;
     }
-    qDebug() << "end" << Qt::endl;
     SetTable();
 }
 
@@ -395,7 +423,7 @@ bool MainWindow::CreatDatabase(QString filename)
 {
     QFile file("/home/kim/qt/qtetst/" + filename + ".txt");
     if (file.exists()){
-        qDebug() << "file already exists" << Qt::endl;
+        AddList("Creat error:file already exists");
         return false;
     }
     file.open(QIODevice::WriteOnly);
@@ -405,6 +433,7 @@ bool MainWindow::CreatDatabase(QString filename)
     file.write(QString("10000\n").toLocal8Bit());
     file.close();
     OpenDatabase(filename);
+    AddList("Creat file");
     return true;
 }
 
@@ -723,6 +752,8 @@ bool MainWindow::LocateFor(QString order)
                 while(coltemp){
                     coltemp->down = NULL;
                     coltemp = coltemp->right;
+
+
                 }
             }
             else{
