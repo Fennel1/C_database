@@ -200,6 +200,9 @@ void MainWindow::readorder()
     order = order.simplified();    //去除多余空格,并转换为小写
 
     if (order.isEmpty() || order.isNull())  return;
+    else if (order.length()==4 && order=="help"){
+
+    }
     else if (order.length() == 4 && order == "save"){
         if(SaveDatabase())  AddList("Successfully saved file");
         else    AddList("Save file failed");
