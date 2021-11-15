@@ -6,7 +6,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->setBaseSize(1600,800);
 
+    ui->textEdit->setReadOnly(true);
     connect(ui->lineEdit, SIGNAL(returnPressed()), this, SLOT(readorder()));
 
     MyDatabase = new Database;
@@ -24,7 +26,7 @@ void MainWindow::OpenDatabase(QString filename)
 {
     CloseDatabase();
 
-    if(readtxt("/home/kim/qt/qtetst/" + filename + ".txt")){
+    if(readtxt("D:/GitHub/C_database/" + filename + ".txt")){
         AddList("Open " + filename);
         SetTable();
     }
@@ -51,7 +53,7 @@ bool MainWindow::readtxt(QString filead)
     MyDatabase->name_database=strlist[0];
     MyDatabase->num_row=strlist[1].toInt();
     MyDatabase->num_col=strlist[2].toInt();
-    qDebug() << MyDatabase->num_row << MyDatabase->num_col << Qt::endl;
+    qDebug() << MyDatabase->num_row << MyDatabase->num_col << endl;
     for (int i=0; i<MyDatabase->num_col; i++){
         Node *temp = new Node;
         QString line=txt.readLine();
@@ -59,7 +61,7 @@ bool MainWindow::readtxt(QString filead)
         QStringList strlist=line.split(",");
         temp->flag = strlist[0].toInt();
         temp->name = strlist[1];
-        qDebug() << temp->flag << temp->name << Qt::endl;
+        qDebug() << temp->flag << temp->name << endl;
         if (i==0){
             MyDatabase->col = temp;
             mycol = temp;
@@ -83,7 +85,7 @@ bool MainWindow::readtxt(QString filead)
         QString line=txt.readLine();
 //        qDebug() << line << endl;
         QStringList strlist=line.split(",");
-        qDebug() << strlist << Qt::endl;
+        qDebug() << strlist << endl;
         Node *cp=coltemp, *rp=rowtemp;
         for (int j=0; j<MyDatabase->num_col; j++){
             Node *tempnode = new Node;
@@ -131,7 +133,7 @@ void MainWindow::SetTable()
     Node *p=MyDatabase->col;
     while(p){
         hlabels << p->name;
-//        qDebug() << p->name << Qt::endl;
+//        qDebug() << p->name << endl;
         p = p->right;
     }
     tablemodel->setHorizontalHeaderLabels(hlabels);
@@ -194,7 +196,7 @@ void MainWindow::SetOrder()
 
 void MainWindow::readorder()
 {
-//    qDebug() << ui->lineEdit->text() << Qt::endl;
+//    qDebug() << ui->lineEdit->text() << endl;
     QString order = ui->lineEdit->text();
 
     order = order.simplified();    //去除多余空格,并转换为小写
@@ -380,7 +382,7 @@ void MainWindow::Modify(QString order)
     QString col = order.mid(i2-n2,n2).simplified();
     QString change = order.mid(i3-n3,n3).simplified();
 
-    qDebug() << row << col << change << Qt::endl;
+    qDebug() << row << col << change << endl;
     Node *f=MyDatabase->col, *p=MyDatabase->col;
     if (row > MyDatabase->num_row){
         AddList(QString("Modify Error:exceed the rowlimit"));
@@ -444,7 +446,7 @@ bool MainWindow::SaveDatabase()
 {
     QFile file("/home/kim/qt/qtetst/" + MyDatabase->name_database + ".txt");
     if (!file.exists()){
-        qDebug() << "file not exists" << Qt::endl;
+        qDebug() << "file not exists" << endl;
         return false;
     }
     QTextStream txt(&file);
@@ -511,14 +513,14 @@ bool MainWindow::LocateFor(QString order)
     }
     QString colname = strlist[0].trimmed();
     QString value = strlist[1].trimmed();
-    qDebug() << colname << value << op << Qt::endl;
+    qDebug() << colname << value << op << endl;
 
     Node *coltemp = MyDatabase->col;
     while(coltemp && coltemp->name!=colname){
         coltemp = coltemp->right;
     }
     if (coltemp==NULL){
-        qDebug() << "colname not find" << Qt::endl;
+        qDebug() << "colname not find" << endl;
         return false;
     }
     if ((op==">=" || op==">" || op=="<=" || op=="<") && coltemp->flag == 2){
@@ -1405,14 +1407,14 @@ bool MainWindow::DelateFor(QString order)
     }
     QString colname = strlist[0].trimmed();
     QString value = strlist[1].trimmed();
-    qDebug() << colname << value << op << Qt::endl;
+    qDebug() << colname << value << op << endl;
 
     Node *coltemp = MyDatabase->col;
     while(coltemp && coltemp->name!=colname){
         coltemp = coltemp->right;
     }
     if (coltemp==NULL){
-        qDebug() << "colname not find" << Qt::endl;
+        qDebug() << "colname not find" << endl;
         return false;
     }
     if ((op==">=" || op==">" || op=="<=" || op=="<") && coltemp->flag == 2){
