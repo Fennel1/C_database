@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     tablemodel = new QStandardItemModel();
     ui->tableView->setModel(tablemodel);
     SetOrder();
+
 }
 
 void MainWindow::OpenDatabase(QString filename)
